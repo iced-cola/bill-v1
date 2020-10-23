@@ -143,7 +143,7 @@
                                 <button class="btn btn-default" data-toggle="modal"
                                         data-target="#add_bill">新增
                                 </button>
-                                <button class="btn btn-info" data-toggle="modal" data-target="#edit_bill" data-bill-id="${bill.billId}">修改</button>
+                                <button id="edit" class="btn btn-info" data-toggle="modal" data-target="#edit_bill" th:attr="data-bill-id=${bill.billId}">修改</button>
                                 <a th:href="@{'/bill/delete?billId=' + ${bill.billId}}" class="btn btn-danger">删除</a>
                             </div>
                         </td>
@@ -312,7 +312,7 @@
                     </div>
                     <div class="form-group">
                         <label for="amount1">消费金额</label>
-                        <input class="form-control" type="number" name="amount" id="amount1" placeholder="消费金额"/>
+                        <input class="form-control" type="number" step="0.01" name="amount" id="amount1" placeholder="消费金额"/>
                     </div>
                     <div class="form-group">
                         <label for="detail1">账单详情</label>
@@ -338,16 +338,22 @@
     </p>
 </div>
 
-<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
-<script src="../lib/bootstrap-3.3.7/dist/js/bootstrap.min.js"></script>
-<script type="javascript">
-    $(document).ready(function() {
-        $('#edit_bill').on('show.bs.modal', function (event) {
-            var billId = $(event.relatedTarget.data('bill-id');
-            console.log("=====" + billId);
-            $(event.currentTarget).find('input[name="billId"]').val(billId);
-        });
+<script type="text/javascript" th:src="@{../lib/jquery-3.4.1/jquery-3.4.1.min.js}"></script>
+<script type="text/javascript" th:src="@{../lib/bootstrap-3.3.7/dist/js/bootstrap.min.js}"></script>
+<script type="text/javascript">
+    $(document).on("click", "#edit", function() {
+        var billId = $(this).data("bill-id");
+        $("#billId1").val(billId);
     });
+
+<!--    $(document).ready(function() {-->
+<!--    console.log("test");-->
+<!--        $('#edit_bill').on('show.bs.modal', function (event) {-->
+<!--            var billId = $(event.relatedTarget.data('bill-id');-->
+<!--            console.log("=====" + billId);-->
+<!--            $(event.currentTarget).find('input[name="billId"]').val(billId);-->
+<!--        });-->
+<!--    });-->
 </script>
 </body>
 </html>

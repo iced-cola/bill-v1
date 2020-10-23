@@ -1,6 +1,7 @@
 package com.bill.service.impl;
 
 import com.bill.constant.ExceptionEnum;
+import com.bill.constant.ResultEnum;
 import com.bill.converter.BillPo2BillFormConverter;
 import com.bill.exception.BillException;
 import com.bill.form.BillForm;
@@ -94,13 +95,26 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    public BillPo modify(BillPo billPo) {
-        return null;
+    public void modify(BillPo billPo) {
+        if (billPo != null && !Strings.isNullOrEmpty(billPo.getBillId())) {
+            String billDate = billPo.getBillDate().replace("-", "");
+            billPo.setBillDate(billDate);
+            billRepository.save(billPo);
+        } else {
+            log.error("【修改账单】参数不正确，billPo={}", billPo);
+            throw new BillException(ExceptionEnum.PARAM_ERROR);
+        }
     }
 
     @Override
     public void delete(String id) {
-
+        if (Strings.isNullOrEmpty(id)) {
+            log.error("【删除账单】删除失败，参数为空");
+            throw new BillException(ExceptionEnum.PARAM_ERROR);
+        }
+        BillPo billPo = new BillPo();
+        billPo.setBillId(id);
+        billRepository.delete(billPo);
     }
 
     @Override

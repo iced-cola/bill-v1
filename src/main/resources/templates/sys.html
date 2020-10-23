@@ -8,19 +8,18 @@
     <style type="text/css">
 		.card {
 			background-color: #f8f8f8;
-			margin-top: 15px;
-			margin: 10px;
-			padding: 10px;
-			width: 450px;
+			margin: 15px;
+			padding: 15px;
+			width: 300px;
 			height: 120px;
 			position: relative;
-			overflow: hidden;
 			border-radius: 12px;
 			display: inline-block;
 		}
 		.card p {
-		    padding-top: 35px;
+		    padding-top: 15px;
 		}
+
     </style>
 </head>
 <body>
@@ -45,7 +44,7 @@
                 </li>
                 <li><a th:href="@{/bill/type}">账单分类</a>
                 </li>
-                <li  class="active">
+                <li class="active">
                     <a th:href="@{/sys/info}">系统信息</a>
                 </li>
             </ul>
@@ -83,24 +82,44 @@
         <div class="col-sm-10">
             <div class="row">
                 <div class="card">
-                    <strong>操作系统版本:</strong>
+                    <h5>操作系统版本:</h5>
                     <p th:text="${sysInfo.getOsVersion()}"></p>
                 </div>
                 <div class="card">
-                    <strong>Java运行时版本:</strong>
+                    <h5>Java运行时版本:</h5>
                     <p th:text="${sysInfo.getJavaVersion()}"></p>
                 </div>
                 <div class="card">
-                    <strong>SpringBoot版本:</strong>
+                    <h5>SpringBoot版本:</h5>
                     <p th:text="${sysInfo.getSpringBootVersion()}"></p>
                 </div>
                 <div class="card">
-                    <strong>MySQL版本:</strong>
+                    <h5>MySQL版本:</h5>
                     <p th:text="${sysInfo.getMysqlVersion()}"></p>
                 </div>
                 <div class="card">
-                    <strong>Thymeleaf版本:</strong>
+                    <h5>Thymeleaf版本:</h5>
                     <p th:text="${sysInfo.getThymeleafVersion()}"></p>
+                </div>
+                <div class="card">
+                    <h5>操作系统版本:</h5>
+                    <p th:text="${sysInfo.getOsVersion()}"></p>
+                </div>
+                <div class="card">
+                    <h5>Java运行时版本:</h5>
+                    <p th:text="${sysInfo.getJavaVersion()}"></p>
+                </div>
+                <div class="card">
+                    <h5>SpringBoot版本:</h5>
+                    <p th:text="${sysInfo.getSpringBootVersion()}"></p>
+                </div>
+                <div class="card">
+                    <h5>MySQL版本:</h5>
+                    <p th:text="${sysInfo.getMysqlVersion()}"></p>
+                </div>
+                <div class="card">
+                    <h5>我的博客地址</h5>
+                    <p>https://iced-cola.com</p>
                 </div>
             </div>
         </div>
@@ -117,5 +136,79 @@
 
 <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
 <script src="../lib/bootstrap-3.3.7/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    var browserInfor = {};
+    var browserInfor.getBrowserInfo = function(){
+        var agent = navigator.userAgent.toLowerCase() ;
+        var sUserAgent = navigator.userAgent;
+        var regStr_ie = /msie [\d.]+;/gi ;
+        var regStr_ff = /firefox\/[\d.]+/gi
+        var regStr_chrome = /chrome\/[\d.]+/gi ;
+        var regStr_saf = /safari\/[\d.]+/gi ;
+        //IE
+        if(agent.indexOf("msie") > 0)
+        {
+            return "浏览器："+agent.match(regStr_ie);
+        }
+        //firefox
+        if(agent.indexOf("firefox") > 0)
+        {
+            return "浏览器："+agent.match(regStr_ff) ;
+        }
+        //Chrome
+        if(agent.indexOf("chrome") > 0)
+        {
+            return "浏览器："+agent.match(regStr_chrome);
+        }
+        //Safari
+        if(agent.indexOf("safari") > 0 && agent.indexOf("chrome") < 0)
+        {
+            return "浏览器："+agent.match(regStr_saf) ;
+        }
+    }
+    var browserInfor.detectOS = function(){
+        var sUserAgent = navigator.userAgent;
+        var isWin = (navigator.platform == "Win32") || (navigator.platform == "Windows");
+        var isMac = (navigator.platform == "Mac68K") || (navigator.platform == "MacPPC") || (navigator.platform == "Macintosh") || (navigator.platform == "MacIntel");
+        if (isMac) return "Mac";
+        var isUnix = (navigator.platform == "X11") && !isWin && !isMac;
+        if (isUnix) return "Unix";
+        var isLinux = (String(navigator.platform).indexOf("Linux") > -1);
+        var bIsAndroid = sUserAgent.toLowerCase().match(/android/i) == "android";
+        if (isLinux) {
+        if(bIsAndroid) return "Android";
+        else return "Linux";
+        }
+        if (isWin) {
+        var isWin2K = sUserAgent.indexOf("Windows NT 5.0") > -1 || sUserAgent.indexOf("Windows 2000") > -1;
+        if (isWin2K) return "操作系统：Win2000";
+        var isWinXP = sUserAgent.indexOf("Windows NT 5.1") > -1 || sUserAgent.indexOf("Windows XP") > -1
+        sUserAgent.indexOf("Windows XP") > -1;
+        if (isWinXP) return "操作系统：WinXP";
+        var isWin2003 = sUserAgent.indexOf("Windows NT 5.2") > -1 || sUserAgent.indexOf("Windows 2003") > -1;
+        if (isWin2003) return "操作系统：Win2003";
+        var isWinVista= sUserAgent.indexOf("Windows NT 6.0") > -1 || sUserAgent.indexOf("Windows Vista") > -1;
+        if (isWinVista) return "操作系统：WinVista";
+        var isWin7 = sUserAgent.indexOf("Windows NT 6.1") > -1 || sUserAgent.indexOf("Windows 7") > -1;
+        if (isWin7) return "操作系统：Win7";
+        var isWin8 = sUserAgent.indexOf("windows nt6.2") > -1 || sUserAgent.indexOf("Windows 8") > -1;
+        if (isWin8) return "操作系统：Win8";
+        }
+        return "其他";
+    }
+    var browserInfor.digits = function(){
+        var agent = navigator.userAgent.toLowerCase() ;
+        var sUserAgent = navigator.userAgent;
+        var sUserAgent = navigator.userAgent;
+        var is64 = sUserAgent.indexOf("WOW64") > -1;
+        if (is64) {
+            return "64位";
+        }else{
+           return "32位";
+        }
+    }
+alert(browserInfor.getBrowserInfo()+'\n'+browserInfor.detectOS()+'-'+browserInfor.digits());
+
+</script>
 </body>
 </html>

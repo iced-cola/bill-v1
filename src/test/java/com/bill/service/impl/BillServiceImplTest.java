@@ -54,6 +54,8 @@ public class BillServiceImplTest {
 
     @Test
     public void delete() {
+        String id = "20200101001";
+        billService.delete(id);
     }
 
     @Test

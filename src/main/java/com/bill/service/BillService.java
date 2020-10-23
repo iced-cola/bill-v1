@@ -30,7 +30,7 @@ public interface BillService {
      * @param billPo 账单实体
      * @return 账单实体
      */
-    BillPo modify(BillPo billPo);
+    void modify(BillPo billPo);
 
     /**
      * 删除一条账单记录

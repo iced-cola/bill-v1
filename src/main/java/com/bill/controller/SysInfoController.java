@@ -40,7 +40,7 @@ public class SysInfoController {
         sysInfo.setJavaVersion(properties.getProperty("java.version"));
         sysInfo.setOsVersion(properties.getProperty("os.version"));
         sysInfo.setSpringBootVersion(SpringBootVersion.getVersion());
-        sysInfo.setMysqlVersion("MySQL 5.7.24");
+        sysInfo.setMysqlVersion("10.1.47-MariaDB-0+deb9u1 Debian 9.13");
         sysInfo.setThymeleafVersion("thymeleaf v2.3.4");
         modelAndView.addObject("sysInfo", sysInfo);
         modelAndView.setViewName("sys");
