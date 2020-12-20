@@ -15,7 +15,7 @@ import java.util.Date;
 @Entity
 @Data
 @ToString
-@Table(name = "payWay")
+@Table(name = "pay_way")
 public class PayWayPo {
 
     // 主键id

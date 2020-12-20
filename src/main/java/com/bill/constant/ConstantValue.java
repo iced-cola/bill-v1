@@ -13,10 +13,6 @@ public class ConstantValue {
      */
     public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 
-    public static final String DATE_FORMAT_FOR_DB = "yyyyMMdd";
-
-    public static final Integer DEFAULT_PAGE_SIZE = 20;
-
     public static final String DEFAULT_PAGE_SIZE_STR = "20";
 
     public static final String RESULT_KEY = "result";

@@ -20,8 +20,6 @@ public class BillDto {
     // 账单日期
     private String billDate;
 
-    private String formattedBillDate;
-
     // 账单金额
     private BigDecimal amount;
 
@@ -30,15 +28,15 @@ public class BillDto {
 
     private String inOutName;
 
-    // 资金用途
-    private String usageType;
-
-    private String usageTypeName;
-
     // 支付方式
     private String payWay;
 
     private String payWayName;
+
+    // 资金用途
+    private String usageType;
+
+    private String usageTypeName;
 
     // 账单详情
     private String detail;

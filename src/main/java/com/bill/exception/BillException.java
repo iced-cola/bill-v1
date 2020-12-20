@@ -12,11 +12,6 @@ public class BillException extends RuntimeException {
 
     private Integer code;
 
-    public BillException(Integer code, String message) {
-        super(message);
-        this.code = code;
-    }
-
     public BillException(ExceptionEnum exceptionEnum) {
         super(exceptionEnum.getMessage());
         this.code = exceptionEnum.getCode();

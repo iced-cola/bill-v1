@@ -10,12 +10,15 @@ import lombok.Getter;
  */
 @Getter
 public enum ResultEnum {
-    SUCCESS(0, "成功"),
-    FAILED(-1, "失败");
 
-    private Integer code;
+    SUCCESS(0, "操作成功"),
 
-    private String message;
+    FAILED(400, "操作失败");
+
+
+    private final Integer code;
+
+    private final String message;
 
     ResultEnum(Integer code, String message) {
         this.code = code;

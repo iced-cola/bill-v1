@@ -2,28 +2,32 @@ package com.bill.service.impl;
 
 import com.bill.constant.ExceptionEnum;
 import com.bill.constant.ResultEnum;
-import com.bill.converter.BillPo2BillFormConverter;
+import com.bill.dto.BillConditionDto;
+import com.bill.dto.BillDto;
 import com.bill.exception.BillException;
-import com.bill.form.BillForm;
 import com.bill.po.BillPo;
+import com.bill.po.InOutPo;
 import com.bill.po.PayWayPo;
-import com.bill.po.SearchForm;
 import com.bill.po.UsageTypePo;
 import com.bill.repository.BillRepository;
+import com.bill.repository.InOutRepository;
 import com.bill.repository.PayWayRepository;
 import com.bill.repository.UsageTypeRepository;
 import com.bill.service.BillService;
-import com.bill.vo.MyPage;
+import com.bill.util.ResultUtil;
+import com.bill.vo.BillPage;
+import com.bill.vo.Result;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import javax.persistence.criteria.Predicate;
+import javax.annotation.Resource;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,50 +41,139 @@ import java.util.List;
 @Slf4j
 public class BillServiceImpl implements BillService {
 
-    private static final String BILL_ID_START_NO = "001";
+    private static final String BILL_ID_START_NO = "-001";
 
-    @Autowired
+    @Resource
     private BillRepository billRepository;
 
-    @Autowired
+    @Resource
+    private InOutRepository inOutRepository;
+
+    @Resource
     private UsageTypeRepository usageTypeRepository;
 
-    @Autowired
+    @Resource
     private PayWayRepository payWayRepository;
 
     @Override
-    public BillPo create(BillPo billPo) {
+    public Result<Object> create(BillPo billPo) {
         // 1. 判断参数是否齐全
         if (!isValidBill(billPo)) {
             log.error("【创建账单】参数不正确, billPo={}", billPo);
             throw new BillException(ExceptionEnum.PARAM_ERROR);
         }
 
-        // 格式化日期
-        String billDate = billPo.getBillDate().replace("-", "");
-        billPo.setBillDate(billDate);
-
         // 2. 生成主键id
         billPo.setBillId(genBillId(billPo.getBillDate()));
 
         // 3. 保存数据库
-        return billRepository.save(billPo);
+        billRepository.save(billPo);
+        return ResultUtil.success(ResultEnum.SUCCESS);
     }
 
+    @Override
+    public Result<BillPage<BillDto>> list(BillConditionDto conditionDto, Pageable pageable) {
+        Specification<BillPo> specification = (Specification<BillPo>) (root, criteriaQuery, criteriaBuilder) -> {
+
+            List<Predicate> predicateList = new ArrayList<>();
+
+            if (!Strings.isNullOrEmpty(conditionDto.getBillDateFrom())
+                    && !Strings.isNullOrEmpty(conditionDto.getBillDateTo())) {
+                predicateList.add(criteriaBuilder.between(root.get("billDate"),
+                        conditionDto.getBillDateFrom(), conditionDto.getBillDateTo()));
+            }
+
+            if (!Strings.isNullOrEmpty(conditionDto.getDetail())) {
+                predicateList.add(criteriaBuilder.like(root.get("detail"), "%" + conditionDto.getDetail() + "%"));
+            }
+
+            if (!CollectionUtils.isEmpty(conditionDto.getInOutNameList())) {
+                Join<Object, Object> inOutPo = root.join("InOutPo", JoinType.LEFT);
+                predicateList.add(criteriaBuilder.equal(root.get("inOut"), inOutPo.get("id")));
+                predicateList.add(criteriaBuilder.and(inOutPo.get("type").in(conditionDto.getInOutNameList())));
+            }
+
+            if (!CollectionUtils.isEmpty(conditionDto.getPayWayList())) {
+                Join<Object, Object> payWayPo = root.join("PayWayPo", JoinType.LEFT);
+                predicateList.add(criteriaBuilder.equal(root.get("payWay"), payWayPo.get("id")));
+                predicateList.add(criteriaBuilder.and(payWayPo.get("wayName").in(conditionDto.getPayWayList())));
+            }
+            if (!CollectionUtils.isEmpty(conditionDto.getUsageTypeList())) {
+                Join<Object, Object> usageTypePo = root.join("UsageTypePo", JoinType.LEFT);
+                predicateList.add(criteriaBuilder.equal(root.get("usageType"), usageTypePo.get("id")));
+                predicateList.add(criteriaBuilder.and(usageTypePo.get("typeName").in(conditionDto.getUsageTypeList())));
+            }
+
+            Predicate[] array = new Predicate[predicateList.size()];
+            return criteriaQuery.where(predicateList.toArray(array)).getRestriction();
+        };
+
+        Page<BillPo> billPoPage = billRepository.findAll(specification, pageable);
+        List<BillDto> billDtoList = convertBill(billPoPage.getContent());
+        BillPage<BillDto> billDtoPage = new BillPage<>();
+        billDtoPage.setCount(billPoPage.getSize());
+        billDtoPage.setTotalPages(billPoPage.getTotalPages());
+        billDtoPage.setDataList(billDtoList);
+        return ResultUtil.success(billDtoPage);
+    }
+
+    /**
+     * 实体类与表单之间转换
+     *
+     * @param billPoList 实体类
+     * @return 表单数据
+     */
+    private List<BillDto> convertBill(List<BillPo> billPoList) {
+        List<BillDto> resultList = new ArrayList<>();
+        List<InOutPo> inOutPoList = inOutRepository.findAll();
+        List<PayWayPo> payWayPoList = payWayRepository.findAll();
+        List<UsageTypePo> usageTypePoList = usageTypeRepository.findAll();
+        for (BillPo billPo : billPoList) {
+            BillDto billDto = new BillDto();
+            BeanUtils.copyProperties(billPo, billDto);
+
+            for (InOutPo inOutPo : inOutPoList) {
+                if (billDto.getInOut().equals(inOutPo.getId())) {
+                    billDto.setInOutName(inOutPo.getType());
+                }
+            }
+
+            if ("支出".equals(billDto.getInOutName())) {
+                for (PayWayPo payWayPo : payWayPoList) {
+                    if (billDto.getInOut().equals(payWayPo.getId())) {
+                        billDto.setInOutName(payWayPo.getWayName());
+                    }
+                }
+
+                for (UsageTypePo usageTypePo : usageTypePoList) {
+                    if (billDto.getInOut().equals(usageTypePo.getId())) {
+                        billDto.setInOutName(usageTypePo.getTypeName());
+                    }
+                }
+            }
+
+            resultList.add(billDto);
+        }
+        return resultList;
+    }
+
+    /**
+     * 参数检查
+     *
+     * @param billPo 新增账单实体
+     * @return 合法时返回true 不合法返回false
+     */
     private boolean isValidBill(BillPo billPo) {
         return billPo != null
                 && !Strings.isNullOrEmpty(billPo.getBillDate())
                 && !Strings.isNullOrEmpty(String.valueOf(billPo.getAmount()))
-                && !Strings.isNullOrEmpty(String.valueOf(billPo.getInOut()))
-                && !Strings.isNullOrEmpty(billPo.getUsageType())
-                && !Strings.isNullOrEmpty(billPo.getPayWay())
-                && !Strings.isNullOrEmpty(billPo.getDetail());
+                && !Strings.isNullOrEmpty(String.valueOf(billPo.getInOut()));
     }
 
     /**
      * 根据账单日期生成最大编号作为id
      *
-     * @param billDate 账单日期
+     * @param billDate 账单日期 yyyy-MM-dd
      * @return 新记录的id
      */
     private String genBillId(String billDate) {
@@ -89,87 +182,59 @@ public class BillServiceImpl implements BillService {
             maxBillId = billDate + BILL_ID_START_NO;
         } else {
             int no = Integer.parseInt(maxBillId.substring(maxBillId.length() - 3)) + 1;
-            maxBillId = billDate + Strings.padStart(String.valueOf(no), 3, '0');
+            maxBillId = billDate + "-" + Strings.padStart(String.valueOf(no), 3, '0');
         }
         return maxBillId;
     }
 
     @Override
-    public void modify(BillPo billPo) {
-        if (billPo != null && !Strings.isNullOrEmpty(billPo.getBillId())) {
-            String billDate = billPo.getBillDate().replace("-", "");
-            billPo.setBillDate(billDate);
-            billRepository.save(billPo);
-        } else {
+    public Result<Object> modify(BillPo billPo) {
+        if (!isValidBill(billPo) || Strings.isNullOrEmpty(billPo.getBillId())) {
             log.error("【修改账单】参数不正确，billPo={}", billPo);
             throw new BillException(ExceptionEnum.PARAM_ERROR);
+        } else {
+            billRepository.save(billPo);
         }
+        return ResultUtil.success(ResultEnum.SUCCESS);
     }
 
     @Override
-    public void delete(String id) {
+    public Result<Object> delete(String id) {
         if (Strings.isNullOrEmpty(id)) {
-            log.error("【删除账单】删除失败，参数为空");
+            log.error("【删除账单】参数为空");
             throw new BillException(ExceptionEnum.PARAM_ERROR);
         }
-        BillPo billPo = new BillPo();
-        billPo.setBillId(id);
-        billRepository.delete(billPo);
+        billRepository.deleteById(id);
+        return ResultUtil.success(ResultEnum.SUCCESS);
     }
 
     @Override
-    public MyPage<BillForm> findBillList(Pageable pageable) {
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber() - 1, pageable.getPageSize());
-        Page<BillPo> billPoPage = billRepository.findAll(pageRequest);
-        List<UsageTypePo> usageTypePoList = usageTypeRepository.findAll();
-        List<PayWayPo> payWayPoList = payWayRepository.findAll();
-        List<BillForm> billFormList = BillPo2BillFormConverter.converter(billPoPage.getContent(), usageTypePoList, payWayPoList);
-        MyPage<BillForm> billFormMyPage = new MyPage<>();
-        billFormMyPage.setTotalPages(billPoPage.getTotalPages());
-        billFormMyPage.setDataList(billFormList);
-        return billFormMyPage;
+    public Result<Object> delete(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            log.error("【删除账单】参数为空");
+            throw new BillException(ExceptionEnum.PARAM_ERROR);
+        }
+        billRepository.deleteByIdList(idList);
+        return ResultUtil.success(ResultEnum.SUCCESS);
     }
 
     @Override
-    public MyPage<BillForm> searchBillList(SearchForm searchForm) {
-        if (searchForm == null) {
-            log.error("【条件检索】参数不正确，检索条件全部为空");
+    public Result<Object> createPayWay(PayWayPo payWayPo) {
+        if (payWayPo == null || Strings.isNullOrEmpty(payWayPo.getWayName())) {
+            log.error("【创建支付方式】参数为空");
             throw new BillException(ExceptionEnum.PARAM_ERROR);
         }
-        Specification<BillPo> specification = (Specification<BillPo>) (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicateList = new ArrayList<>();
+        payWayRepository.save(payWayPo);
+        return ResultUtil.success(ResultEnum.SUCCESS);
+    }
 
-            // 检索条件中年份和月份同时存在时
-            if (searchForm.getYear() != null && searchForm.getMonth() != null) {
-                String month = Strings.padStart(searchForm.getMonth(), 2, '0');
-                String condition1 = searchForm.getYear() + month;
-                predicateList.add(criteriaBuilder.like(root.get("billDate"), condition1 + "%"));
-            }
-
-            // 只有年份时
-            if (searchForm.getYear() != null) {
-                predicateList.add(criteriaBuilder.like(root.get("billDate"), searchForm.getYear() + "%"));
-            }
-
-            if (searchForm.getUsageType() != null && !searchForm.getUsageType().equals("选择用途分类")) {
-                predicateList.add(criteriaBuilder.equal(root.get("usageType"), searchForm.getUsageType()));
-            }
-
-            if (searchForm.getPayWay() != null && !searchForm.getPayWay().equals("选择支付方式分类")) {
-                predicateList.add(criteriaBuilder.equal(root.get("payWay"), searchForm.getPayWay()));
-            }
-
-            return criteriaBuilder.and(predicateList.toArray(new Predicate[0]));
-        };
-
-        List<BillPo> billPoList = this.billRepository.findAll(specification);
-
-        List<UsageTypePo> usageTypePoList = usageTypeRepository.findAll();
-        List<PayWayPo> payWayPoList = payWayRepository.findAll();
-        List<BillForm> billFormList = BillPo2BillFormConverter.converter(billPoList, usageTypePoList, payWayPoList);
-        MyPage<BillForm> myPage = new MyPage<>();
-        myPage.setTotalPages(1);
-        myPage.setDataList(billFormList);
-        return myPage;
+    @Override
+    public Result<Object> createUsage(UsageTypePo usageTypePo) {
+        if (usageTypePo == null || Strings.isNullOrEmpty(usageTypePo.getTypeName())) {
+            log.error("【创建账单用途】参数为空");
+            throw new BillException(ExceptionEnum.PARAM_ERROR);
+        }
+        usageTypeRepository.save(usageTypePo);
+        return ResultUtil.success(ResultEnum.SUCCESS);
     }
 }

@@ -1,7 +1,7 @@
 package com.bill.util;
 
 import com.bill.constant.ResultEnum;
-import com.bill.vo.ResultVO;
+import com.bill.vo.Result;
 
 /**
  * @author :  zhulongkun20@gmail.com
@@ -9,14 +9,38 @@ import com.bill.vo.ResultVO;
  * @description :  返回结果前端用
  * @since :  v1.0
  */
-public class ResultUtil<T> {
+public class ResultUtil {
 
-    public static ResultVO success(Object object) {
-        ResultVO resultVO = new ResultVO();
-        resultVO.setCode(ResultEnum.SUCCESS.getCode());
-        resultVO.setMessage(ResultEnum.SUCCESS.getMessage());
-        resultVO.setData(object);
-        return resultVO;
+    public static <T> Result<T> success(T object) {
+        Result<T> result = new Result<>();
+        result.setCode(ResultEnum.SUCCESS.getCode());
+        result.setMessage(ResultEnum.SUCCESS.getMessage());
+        result.setData(object);
+        return result;
+    }
+
+    public static <T> Result<T> success(ResultEnum resultEnum) {
+        Result<T> result = new Result<>();
+        result.setCode(resultEnum.getCode());
+        result.setMessage(resultEnum.getMessage());
+        result.setData(null);
+        return result;
+    }
+
+    public static <T> Result<T> failed(ResultEnum resultEnum) {
+        Result<T> result = new Result<>();
+        result.setCode(resultEnum.getCode());
+        result.setMessage(resultEnum.getMessage());
+        result.setData(null);
+        return result;
+    }
+
+    public static <T> Result<T> failed(Integer code, String message) {
+        Result<T> result = new Result<>();
+        result.setCode(code);
+        result.setMessage(message);
+        result.setData(null);
+        return result;
     }
 
 }

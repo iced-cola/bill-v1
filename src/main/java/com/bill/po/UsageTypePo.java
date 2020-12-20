@@ -15,7 +15,7 @@ import java.util.Date;
 @Data
 @Entity
 @ToString
-@Table(name = "usageType")
+@Table(name = "usage_type")
 public class UsageTypePo {
 
     @Id

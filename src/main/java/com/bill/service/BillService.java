@@ -1,9 +1,12 @@
 package com.bill.service;
 
-import com.bill.form.BillForm;
+import com.bill.dto.BillConditionDto;
+import com.bill.dto.BillDto;
 import com.bill.po.BillPo;
-import com.bill.po.SearchForm;
-import com.bill.vo.MyPage;
+import com.bill.po.PayWayPo;
+import com.bill.po.UsageTypePo;
+import com.bill.vo.BillPage;
+import com.bill.vo.Result;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -22,25 +25,51 @@ public interface BillService {
      * @param billPo 账单实体
      * @return 账单Dto
      */
-    BillPo create(BillPo billPo);
+    Result<Object> create(BillPo billPo);
+
+    /**
+     * 按条件检索账单数据
+     *
+     * @param conditionDto 检索条件
+     * @return 结果集
+     */
+    Result<BillPage<BillDto>> list(BillConditionDto conditionDto, Pageable pageable);
 
     /**
      * 修改一条账单记录
      *
      * @param billPo 账单实体
-     * @return 账单实体
      */
-    void modify(BillPo billPo);
+    Result<Object> modify(BillPo billPo);
 
     /**
      * 删除一条账单记录
      *
      * @param id 主键id
      */
-    void delete(String id);
+    Result<Object> delete(String id);
 
-    MyPage<BillForm> findBillList(Pageable pageable);
+    /**
+     * 批量删除账单记录
+     *
+     * @param idList id集合
+     */
+    Result<Object> delete(List<String> idList);
 
-    MyPage<BillForm> searchBillList(SearchForm searchForm);
+    /**
+     * 创建新的支付方式
+     *
+     * @param payWayPo 支付方式
+     * @return 支付方式
+     */
+    Result<Object> createPayWay(PayWayPo payWayPo);
+
+    /**
+     * 创建新的账单用途
+     *
+     * @param usageTypePo 用途
+     * @return 用途
+     */
+    Result<Object> createUsage(UsageTypePo usageTypePo);
 
 }
